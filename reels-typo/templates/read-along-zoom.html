@@ -1,0 +1,72 @@
+<template>
+<!-- reels-typo §7 FINAL: drift lembut -> PUNCH aksen -> MELUNCUR kunci-center. T = timestamp VO. -->
+  <div data-composition-id="SCENE" data-width="720" data-height="1280">
+    <div class="stage">
+      <div id="x-bg" class="clip bg" data-start="0" data-duration="DUR" data-track-index="0"></div>
+      <div id="x-cap" class="clip caplayer" data-start="0" data-duration="DUR" data-track-index="1">
+        <div id="x-river" data-layout-allow-overflow="true">
+          <div id="x-l1" class="line"><span class="w" id="x-w0">Kata1</span> <span class="w" id="x-w1">Kata2</span></div>
+          <div id="x-l2" class="line hero"><span class="w" id="x-w2">KATA3</span></div>
+          <div id="x-l3" class="line"><span class="w" id="x-w3">kata4</span> <span class="w" id="x-w4">kata5</span></div>
+          <div id="x-l4" class="line hero gold"><span class="w" id="x-w5">Kata6</span> <span class="w" id="x-w6">KATA7</span></div>
+        </div>
+      </div>
+      <div id="x-flash" class="clip flash" data-start="7.9" data-duration="0.1" data-track-index="2"></div>
+    </div>
+    <style>
+      [data-composition-id="SCENE"] .stage { position: absolute; inset: 0; overflow: hidden; background: #101014; font-family: Inter, system-ui, sans-serif; }
+      [data-composition-id="SCENE"] .bg { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 40%, #26262e 0%, #101014 70%); }
+      [data-composition-id="SCENE"] .caplayer { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+      [data-composition-id="SCENE"] #x-river { display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: 0; }
+      [data-composition-id="SCENE"] .line { text-align: center; white-space: nowrap; }
+      [data-composition-id="SCENE"] .w { display: inline-block; font-size: 46px; font-weight: 600; color: #fff; opacity: 0; text-shadow: 0 2px 18px rgba(0,0,0,.5); }
+      [data-composition-id="SCENE"] .line.hero .w { font-size: 120px; font-weight: 800; letter-spacing: -2px; line-height: 1.05; }
+      [data-composition-id="SCENE"] .line.gold .w { color: #FFD98A; }
+      [data-composition-id="SCENE"] .w.lit { text-shadow: 0 0 36px rgba(255,255,255,.7), 0 2px 18px rgba(0,0,0,.5); }
+      [data-composition-id="SCENE"] .line.gold .w.lit { text-shadow: 0 0 44px rgba(255,217,138,.9), 0 2px 18px rgba(0,0,0,.5); }
+      [data-composition-id="SCENE"] .flash { position: absolute; inset: 0; opacity: 0; background: #7DD3FC; }
+    </style>
+    <script>
+      (() => {
+        const tl = gsap.timeline({ paused: true });
+        const Q = (s) => document.querySelector(s);
+        const ALL = ["#x-w0", "#x-w1", "#x-w2", "#x-w3", "#x-w4", "#x-w5", "#x-w6"];
+        // kata, detik-dibaca, drift-y river saat kata aktif (sungai mengalir ke atas)
+        const WORDS = [
+          ["#x-w0", T0], ["#x-w1", T1], ["#x-w2", T2],
+          ["#x-w3", T3], ["#x-w4", T4], ["#x-w5", T5], ["#x-w6", T6],  // T = detik VO
+        ];
+        // RIVER masuk: fade blok
+        tl.fromTo("#x-river", { opacity: 0 }, { opacity: 1, duration: 0.2 }, 0.15);
+        // Progressive reveal: kata muncul SAAT dibaca (blur+rise kecil), bukan preload
+        WORDS.forEach(([sel, t]) => {
+          tl.fromTo(sel, { opacity: 0, y: 26, filter: "blur(10px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.35, ease: "power3.out" }, t);
+          tl.add(() => Q(sel).classList.add("lit"), t + 0.1);
+          tl.add(() => { Q(sel).classList.remove("lit"); }, t + 0.5);
+        });
+        // FASE 1 (0.5–2.9s) ala v3: drift+zoom lembut sejak awal (river hidup)
+        tl.fromTo("#x-river", { scale: 1 }, { scale: 1.5, duration: 2.4, ease: "power1.inOut" }, 0.5);
+        tl.fromTo("#x-river", { y: 120 }, { y: -40, duration: 2.4, ease: "power1.inOut" }, 0.5);
+        tl.fromTo("#x-river", { x: 0 }, { x: 80, duration: 2.4, ease: "power1.inOut" }, 0.5);
+        // FASE 2 (2.9s) ala v5: PUNCH mendadak ke CUMA center
+        tl.to("#x-river", { scale: 2.2, x: 260, y: -180, duration: 0.45, ease: "expo.out" }, 2.9);
+        // FASE 3 (3.35s) ala v5: MELUNCUR ke $99 CENTER
+        tl.to("#x-river", { scale: 2.6, x: -450, y: -260, duration: 0.9, ease: "power3.inOut" }, 3.35);
+        // FASE 4: HOLD $99 center
+        tl.to("#x-river", { scale: 2.6, x: -450, y: -260, duration: 2.5 }, 4.25);
+        // Fade kata lampau: bukan biner — redup bertahap setelah dibaca
+        WORDS.forEach(([sel, t], i) => {
+          if (i < WORDS.length - 1) tl.to(sel, { opacity: 0.35, duration: 0.8, ease: "power1.out" }, t + 0.9);
+        });
+        // PUNCH $99: glow meledak (bukan scale) — kamera sudah dekat
+        tl.fromTo("#x-w6", { textShadow: "0 0 44px rgba(255,217,138,.9), 0 2px 18px rgba(0,0,0,.5)" }, { textShadow: "0 0 90px rgba(255,217,138,1), 0 2px 18px rgba(0,0,0,.5)", duration: 0.3, ease: "power2.out" }, 3.25);
+        // Flash 3-warna penutup
+        tl.fromTo("#x-flash", { opacity: 0, backgroundColor: "#7DD3FC" }, { opacity: 1, duration: 0.033 }, 7.9);
+        tl.to("#x-flash", { backgroundColor: "#FEF3C7", duration: 0.033 }, 7.933);
+        tl.to("#x-flash", { backgroundColor: "#C4B5FD", duration: 0.034 }, 7.966);
+        tl.to("#x-flash", { opacity: 0, duration: 0.05 }, 8.0);
+        window.__timelines["SCENE"] = tl;
+      })();
+    </script>
+  </div>
+</template>
